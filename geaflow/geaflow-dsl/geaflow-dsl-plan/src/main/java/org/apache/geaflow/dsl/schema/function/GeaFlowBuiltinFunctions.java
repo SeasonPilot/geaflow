@@ -1432,7 +1432,38 @@ public final class GeaFlowBuiltinFunctions {
     }
 
     /**
-     * ISO-GQL SAME predicate function.
+     * ISO-GQL SAME predicate function for vertices.
+     * Checks if two vertices refer to the same element by comparing their IDs.
+     *
+     * @param a first vertex
+     * @param b second vertex
+     * @return true if vertices have the same ID, false otherwise, null if either is null
+     */
+    public static Boolean same(RowVertex a, RowVertex b) {
+        if (a == null || b == null) {
+            return null;
+        }
+        return Objects.equals(a.getId(), b.getId());
+    }
+
+    /**
+     * ISO-GQL SAME predicate function for edges.
+     * Checks if two edges refer to the same element by comparing their source and target IDs.
+     *
+     * @param a first edge
+     * @param b second edge
+     * @return true if edges have the same source and target IDs, false otherwise, null if either is null
+     */
+    public static Boolean same(RowEdge a, RowEdge b) {
+        if (a == null || b == null) {
+            return null;
+        }
+        return Objects.equals(a.getSrcId(), b.getSrcId())
+            && Objects.equals(a.getTargetId(), b.getTargetId());
+    }
+
+    /**
+     * ISO-GQL SAME predicate function (fallback for mixed or unknown types).
      * Checks if two graph elements refer to the same element by comparing their identities.
      * For vertices, compares vertex IDs.
      * For edges, compares both source and target IDs.
@@ -1445,25 +1476,44 @@ public final class GeaFlowBuiltinFunctions {
         if (a == null || b == null) {
             return null;
         }
-        try {
-            // Handle vertex-vertex comparison
-            if (a instanceof RowVertex && b instanceof RowVertex) {
-                Object idA = ((RowVertex) a).getId();
-                Object idB = ((RowVertex) b).getId();
-                return Objects.equals(idA, idB);
-            }
-            // Handle edge-edge comparison
-            if (a instanceof RowEdge && b instanceof RowEdge) {
-                RowEdge edgeA = (RowEdge) a;
-                RowEdge edgeB = (RowEdge) b;
-                return Objects.equals(edgeA.getSrcId(), edgeB.getSrcId())
-                    && Objects.equals(edgeA.getTargetId(), edgeB.getTargetId());
-            }
-            // Different types cannot be the same
-            return false;
-        } catch (ClassCastException ex) {
-            return false;
+        // Delegate to type-specific overloads when possible
+        if (a instanceof RowVertex && b instanceof RowVertex) {
+            return same((RowVertex) a, (RowVertex) b);
         }
+        if (a instanceof RowEdge && b instanceof RowEdge) {
+            return same((RowEdge) a, (RowEdge) b);
+        }
+        // Different types cannot be the same
+        return false;
+    }
+
+    /**
+     * ISO-GQL SAME predicate function for multiple elements.
+     * Checks if all elements refer to the same graph element.
+     * Returns true only if all elements are identical (same type and same identity).
+     *
+     * @param elements array of elements to compare (minimum 2 required)
+     * @return true if all elements have the same identity, false otherwise, null if any is null
+     */
+    public static Boolean same(Object... elements) {
+        if (elements == null || elements.length < 2) {
+            return null;
+        }
+        // Check for any null elements
+        for (Object e : elements) {
+            if (e == null) {
+                return null;
+            }
+        }
+        // Compare all elements with the first one
+        Object first = elements[0];
+        for (int i = 1; i < elements.length; i++) {
+            Boolean result = same(first, elements[i]);
+            if (result == null || !result) {
+                return result;
+            }
+        }
+        return true;
     }
 
     public static Boolean unequal(Long a, Long b) {

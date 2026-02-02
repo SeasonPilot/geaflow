@@ -120,8 +120,8 @@ public class SameTest {
 
     @Test
     public void testSameWithBothNull() {
-        // Test with both arguments null
-        Boolean result = GeaFlowBuiltinFunctions.same(null, null);
+        // Test with both arguments null - use explicit cast to Object to resolve ambiguity
+        Boolean result = GeaFlowBuiltinFunctions.same((Object) null, (Object) null);
         Assert.assertNull(result, "Both null arguments should return null");
     }
 
@@ -153,5 +153,103 @@ public class SameTest {
 
         Boolean result = GeaFlowBuiltinFunctions.same(s1, s2);
         Assert.assertFalse(result, "Non-graph elements should return false");
+    }
+
+    // Tests for type-specific overloads (RowVertex, RowEdge)
+
+    @Test
+    public void testSameVertexOverloadWithIdenticalIds() {
+        // Test the type-specific RowVertex overload
+        ObjectVertex v1 = new ObjectVertex(100, null, ObjectRow.create("Alice", 25));
+        ObjectVertex v2 = new ObjectVertex(100, null, ObjectRow.create("Bob", 30));
+
+        // Explicitly call with RowVertex types
+        Boolean result = GeaFlowBuiltinFunctions.same((org.apache.geaflow.dsl.common.data.RowVertex) v1,
+            (org.apache.geaflow.dsl.common.data.RowVertex) v2);
+        Assert.assertTrue(result, "Type-specific vertex overload should work");
+    }
+
+    @Test
+    public void testSameEdgeOverloadWithIdenticalIds() {
+        // Test the type-specific RowEdge overload
+        ObjectEdge e1 = new ObjectEdge(10, 20, ObjectRow.create("knows"));
+        ObjectEdge e2 = new ObjectEdge(10, 20, ObjectRow.create("likes"));
+
+        // Explicitly call with RowEdge types
+        Boolean result = GeaFlowBuiltinFunctions.same((org.apache.geaflow.dsl.common.data.RowEdge) e1,
+            (org.apache.geaflow.dsl.common.data.RowEdge) e2);
+        Assert.assertTrue(result, "Type-specific edge overload should work");
+    }
+
+    // Tests for multi-argument same() varargs method
+
+    @Test
+    public void testSameWithThreeIdenticalVertices() {
+        // Test varargs with 3 identical vertices
+        ObjectVertex v1 = new ObjectVertex(1, null, ObjectRow.create("Alice", 25));
+        ObjectVertex v2 = new ObjectVertex(1, null, ObjectRow.create("Bob", 30));
+        ObjectVertex v3 = new ObjectVertex(1, null, ObjectRow.create("Charlie", 35));
+
+        Boolean result = GeaFlowBuiltinFunctions.same(v1, v2, v3);
+        Assert.assertTrue(result, "Three vertices with same ID should return true");
+    }
+
+    @Test
+    public void testSameWithThreeVerticesOneDifferent() {
+        // Test varargs with one different vertex
+        ObjectVertex v1 = new ObjectVertex(1, null, ObjectRow.create("Alice", 25));
+        ObjectVertex v2 = new ObjectVertex(1, null, ObjectRow.create("Bob", 30));
+        ObjectVertex v3 = new ObjectVertex(2, null, ObjectRow.create("Charlie", 35));
+
+        Boolean result = GeaFlowBuiltinFunctions.same(v1, v2, v3);
+        Assert.assertFalse(result, "Three vertices with one different ID should return false");
+    }
+
+    @Test
+    public void testSameWithFourIdenticalEdges() {
+        // Test varargs with 4 identical edges
+        ObjectEdge e1 = new ObjectEdge(1, 2, ObjectRow.create("knows"));
+        ObjectEdge e2 = new ObjectEdge(1, 2, ObjectRow.create("likes"));
+        ObjectEdge e3 = new ObjectEdge(1, 2, ObjectRow.create("follows"));
+        ObjectEdge e4 = new ObjectEdge(1, 2, ObjectRow.create("trusts"));
+
+        Boolean result = GeaFlowBuiltinFunctions.same(e1, e2, e3, e4);
+        Assert.assertTrue(result, "Four edges with same source and target IDs should return true");
+    }
+
+    @Test
+    public void testSameWithMultipleNullInMiddle() {
+        // Test varargs with null in the middle
+        ObjectVertex v1 = new ObjectVertex(1, null, ObjectRow.create("Alice", 25));
+        ObjectVertex v3 = new ObjectVertex(1, null, ObjectRow.create("Charlie", 35));
+
+        Boolean result = GeaFlowBuiltinFunctions.same(v1, null, v3);
+        Assert.assertNull(result, "Varargs with null element should return null");
+    }
+
+    @Test
+    public void testSameWithEmptyVarargs() {
+        // Test varargs with no arguments (should return null)
+        Boolean result = GeaFlowBuiltinFunctions.same(new Object[0]);
+        Assert.assertNull(result, "Empty varargs should return null");
+    }
+
+    @Test
+    public void testSameWithSingleVararg() {
+        // Test varargs with single argument (should return null - need at least 2)
+        ObjectVertex v1 = new ObjectVertex(1, null, ObjectRow.create("Alice", 25));
+
+        Boolean result = GeaFlowBuiltinFunctions.same(new Object[]{v1});
+        Assert.assertNull(result, "Single vararg should return null");
+    }
+
+    @Test
+    public void testSameWithMixedTypesInVarargs() {
+        // Test varargs with mixed vertex and edge types
+        ObjectVertex v = new ObjectVertex(1, null, ObjectRow.create("Alice", 25));
+        ObjectEdge e = new ObjectEdge(1, 2, ObjectRow.create("knows"));
+
+        Boolean result = GeaFlowBuiltinFunctions.same(v, e);
+        Assert.assertFalse(result, "Mixed vertex and edge in varargs should return false");
     }
 }

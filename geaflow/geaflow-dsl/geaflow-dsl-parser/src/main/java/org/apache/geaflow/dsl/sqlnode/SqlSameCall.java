@@ -19,6 +19,7 @@
 
 package org.apache.geaflow.dsl.sqlnode;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 import org.apache.calcite.sql.SqlCall;
@@ -61,7 +62,8 @@ public class SqlSameCall extends SqlCall {
      */
     public SqlSameCall(SqlParserPos pos, List<SqlNode> operands) {
         super(pos);
-        this.operands = Objects.requireNonNull(operands, "operands");
+        // Create a mutable copy to allow setOperand to work
+        this.operands = new ArrayList<>(Objects.requireNonNull(operands, "operands"));
 
         // ISO-GQL requires at least 2 arguments
         if (operands.size() < 2) {
